@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -24,12 +25,14 @@ func (c *Client) InitFace(key string) {
 
 //DetectURL calls the Project Oxford Face API to perform a detection using a URL to an image.
 //TODO: Need to figure out if this is how I want to handle error responses.
-func (c *Client) DetectURL(url, returnFaceAttributes string, returnFaceID, returnFaceLandmarks bool) (*FaceDetectResponse, error) {
+func (c *Client) DetectURL(url, returnFaceAttributes string, returnFaceID, returnFaceLandmarks bool) ([]*FaceDetectResponse, error) {
 	//TODO: Do this better...
-	reqURL := fmt.Sprintf("https://api.projectoxford.ai/face/v1.0/detect?returnFaceId=%t&returnFaceLandmarks=%t&returnFaceAttributes%s",
+	reqURL := fmt.Sprintf("https://api.projectoxford.ai/face/v1.0/detect?returnFaceId=%t&returnFaceLandmarks=%t&returnFaceAttributes=%s",
 		returnFaceID,
 		returnFaceLandmarks,
 		returnFaceAttributes)
+
+	log.Printf("Request URL: %s", reqURL)
 
 	req, err := generateRequestWithPayload("POST", reqURL, c.face.key, []byte(fmt.Sprintf("{url:\"%s\"}", url)))
 
@@ -45,9 +48,9 @@ func (c *Client) DetectURL(url, returnFaceAttributes string, returnFaceID, retur
 	}
 
 	decoder := json.NewDecoder(res.Body)
-	detRes := &FaceDetectResponse{}
+	detRes := []*FaceDetectResponse{}
 
-	err = decoder.Decode(detRes)
+	err = decoder.Decode(&detRes)
 
 	if err != nil {
 		return nil, err
