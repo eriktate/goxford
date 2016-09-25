@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 )
@@ -34,7 +35,7 @@ func (c *Client) DetectURL(url, returnFaceAttributes string, returnFaceID, retur
 
 	log.Printf("Request URL: %s", reqURL)
 
-	req, err := generateRequestWithPayload("POST", reqURL, c.face.key, []byte(fmt.Sprintf("{url:\"%s\"}", url)))
+	req, err := generateRequestWithJSONPayload("POST", reqURL, c.face.key, []byte(fmt.Sprintf("{url:\"%s\"}", url)))
 
 	if err != nil {
 		return nil, err
@@ -59,8 +60,63 @@ func (c *Client) DetectURL(url, returnFaceAttributes string, returnFaceID, retur
 	return detRes, nil
 }
 
+// DetectPath calls the Project Oxford Face API to perform a detection using a local path to an image.
+func (c *Client) DetectPath(path, returnFaceAttributes string, returnFaceID, returnFaceLandmarks bool) ([]*FaceDetectResponse, error) {
+	data, err := ioutil.ReadFile(path)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return c.DetectBytes(data, returnFaceAttributes, returnFaceID, returnFaceLandmarks)
+}
+
+// DetectBytes calls the Project Oxford Face API to perform a detection using a slice of bytes representing an image.
+func (c *Client) DetectBytes(image []byte, returnFaceAttributes string, returnFaceID, returnFaceLandmarks bool) ([]*FaceDetectResponse, error) {
+	//TODO: Need to do this better.
+	reqURL := fmt.Sprintf("https://api.projectoxford.ai/face/v1.0/detect?returnFaceId=%t&returnFaceLandmarks=%t&returnFaceAttributes=%s",
+		returnFaceID,
+		returnFaceLandmarks,
+		returnFaceAttributes)
+
+	r, err := generateRequestWithOctetPayload("POST", reqURL, c.face.key, image)
+
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := http.DefaultClient.Do(r)
+
+	if err != nil {
+		return nil, err
+	}
+
+	decoder := json.NewDecoder(resp.Body)
+	detRes := []*FaceDetectResponse{}
+	err = decoder.Decode(&detRes)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return detRes, nil
+}
+
 func generateRequest(method, url, key string) (*http.Request, error) {
 	r, err := http.NewRequest(method, url, nil)
+
+	if err != nil {
+		return r, err
+	}
+
+	r.Header.Add(AuthHeader, key)
+
+	return r, nil
+}
+
+func generateRequestWithJSONPayload(method, url, key string, payload []byte) (*http.Request, error) {
+	body := bytes.NewReader(payload)
+	r, err := http.NewRequest(method, url, body)
 
 	if err != nil {
 		return r, err
@@ -72,7 +128,7 @@ func generateRequest(method, url, key string) (*http.Request, error) {
 	return r, nil
 }
 
-func generateRequestWithPayload(method, url, key string, payload []byte) (*http.Request, error) {
+func generateRequestWithOctetPayload(method, url, key string, payload []byte) (*http.Request, error) {
 	body := bytes.NewReader(payload)
 	r, err := http.NewRequest(method, url, body)
 
@@ -81,7 +137,7 @@ func generateRequestWithPayload(method, url, key string, payload []byte) (*http.
 	}
 
 	r.Header.Add(AuthHeader, key)
-	r.Header.Add("Content-Type", "application/json")
+	r.Header.Add("Content-Type", "application/octet-stream")
 
 	return r, nil
 }
