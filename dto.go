@@ -52,7 +52,7 @@ type FaceLandmarks struct {
 	UnderLipBottom      Point `json:"underLipBottom,omitempty"`
 }
 
-//FaceAttribute represents the attributes of a given face.
+//FaceAttributes represents the attributes of a given face.
 type FaceAttributes struct {
 	Age        float32    `json:"age,omitempty"`
 	Gender     string     `json:"gender,omitempty"`
@@ -81,4 +81,11 @@ type HeadPose struct {
 type Point struct {
 	X float32 `json:"x,omitempty"`
 	Y float32 `json:"y,omitempty"`
+}
+
+// PersonGroup represents a person group within the Project Oxford Face API.
+type PersonGroup struct {
+	PersonGroupID string `json:"personGroupID"`
+	Name          string `json:"name"`
+	UserData      string `json:"userData,omitempty"`
 }
