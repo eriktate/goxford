@@ -1,3 +1,8 @@
+// IMPORTANT DEV NOTES:
+// - Still need to decide on a better way of setting up the PO endpoints. A lot of the URL is defined within the functions
+//	 which means that a direct change to goxford.go is required if those endpoints ever change. Would probably be better/easier
+//   to just build some config ahead of time that determines the URL, params, and method outside of this code.
+
 package goxford
 
 import (
@@ -10,26 +15,32 @@ import (
 	"strings"
 )
 
-//Client is a collection of API structs that can be used to communicate with different Project Oxford APIs.
+// Client is a collection of API structs that can be used to communicate with different Project Oxford APIs.
 type Client struct {
 	face *Face
 }
 
-//Face is a receiver for methods related to talking to the Project Oxford Face API.
+// Face is a receiver for methods related to talking to the Project Oxford Face API.
 type Face struct {
 	key string
 }
 
-//InitFace prepares the Client to make calls to the Project Oxford Face API.
+// InitFace prepares the Client to make calls to the Project Oxford Face API.
 func (c *Client) InitFace(key string) {
 	c.face = &Face{key: key}
 }
 
-//DetectURL calls the Project Oxford Face API to perform a detection using a URL to an image.
-//TODO: Need to figure out if this is how I want to handle error responses.
+// GetURL returns the base URL for the Project Oxford Face API.
+func (f *Face) GetURL() string {
+	return fmt.Sprintf("%s/face/v1.0", BaseURL)
+}
+
+// DetectURL calls the Project Oxford Face API to perform a detection using a URL to an image.
+// TODO: Need to figure out if this is how I want to handle error responses.
 func (c *Client) DetectURL(url, returnFaceAttributes string, returnFaceID, returnFaceLandmarks bool) ([]*FaceDetectResponse, error) {
-	//TODO: Do this better...
-	reqURL := fmt.Sprintf("https://api.projectoxford.ai/face/v1.0/detect?returnFaceId=%t&returnFaceLandmarks=%t&returnFaceAttributes=%s",
+	// TODO: Do this better...
+	reqURL := fmt.Sprintf("%s/detect?returnFaceId=%t&returnFaceLandmarks=%t&returnFaceAttributes=%s",
+		c.face.GetURL(),
 		returnFaceID,
 		returnFaceLandmarks,
 		returnFaceAttributes)
@@ -42,7 +53,7 @@ func (c *Client) DetectURL(url, returnFaceAttributes string, returnFaceID, retur
 		return nil, err
 	}
 
-	//TODO: Might create a separate client from the default later.
+	// TODO: Might create a separate client from the default later.
 	res, err := http.DefaultClient.Do(req)
 
 	if err != nil {
@@ -74,8 +85,9 @@ func (c *Client) DetectPath(path, returnFaceAttributes string, returnFaceID, ret
 
 // DetectBytes calls the Project Oxford Face API to perform a detection using a slice of bytes representing an image.
 func (c *Client) DetectBytes(image []byte, returnFaceAttributes string, returnFaceID, returnFaceLandmarks bool) ([]*FaceDetectResponse, error) {
-	//TODO: Need to do this better.
-	reqURL := fmt.Sprintf("https://api.projectoxford.ai/face/v1.0/detect?returnFaceId=%t&returnFaceLandmarks=%t&returnFaceAttributes=%s",
+	// TODO: Need to do this better.
+	reqURL := fmt.Sprintf("%s/detect?returnFaceId=%t&returnFaceLandmarks=%t&returnFaceAttributes=%s",
+		c.face.GetURL(),
 		returnFaceID,
 		returnFaceLandmarks,
 		returnFaceAttributes)
@@ -105,7 +117,7 @@ func (c *Client) DetectBytes(image []byte, returnFaceAttributes string, returnFa
 
 // CreatePersonGroup calls the Project Oxford Face API to create a new person group that persons can be added to.
 func (c *Client) CreatePersonGroup(personGroupID, displayName, userData string) (bool, error) {
-	reqURL := fmt.Sprintf("https://api.projectoxford.ai/face/v1.0/personGroups/%s", strings.ToLower(personGroupID))
+	reqURL := fmt.Sprintf("%s/personGroups/%s", c.face.GetURL(), strings.ToLower(personGroupID))
 	payload := fmt.Sprintf("{\"name\":\"%s\",\"userData\":\"%s\"}", displayName, userData)
 
 	r, err := generateRequestWithJSONPayload("PUT", reqURL, c.face.key, []byte(payload))
@@ -129,7 +141,7 @@ func (c *Client) CreatePersonGroup(personGroupID, displayName, userData string) 
 
 // GetPersonGroup calls the Project Oxford Face API to get a person group with the given personGroupID.
 func (c *Client) GetPersonGroup(personGroupID string) (*PersonGroup, error) {
-	reqURL := fmt.Sprintf("https://api.projectoxford.ai/face/v1.0/personGroups/%s", strings.ToLower(personGroupID))
+	reqURL := fmt.Sprintf("%s/personGroups/%s", c.face.GetURL(), strings.ToLower(personGroupID))
 
 	r, err := generateRequest("GET", reqURL, c.face.key)
 
@@ -156,7 +168,7 @@ func (c *Client) GetPersonGroup(personGroupID string) (*PersonGroup, error) {
 
 // CreatePerson calls the Project Oxford Face API to create a person within an existing personGroup.
 func (c *Client) CreatePerson(personGroupID, name, userData string) (*Person, error) {
-	reqURL := fmt.Sprintf("https://api.projectoxford.ai/face/v1.0/personGroups/%s/persons", strings.ToLower(personGroupID))
+	reqURL := fmt.Sprintf("%s/personGroups/%s/persons", c.face.GetURL(), strings.ToLower(personGroupID))
 	payload := fmt.Sprintf("{\"name\":\"%s\",\"userData\":\"%s\"}", name, userData)
 	r, err := generateRequestWithJSONPayload("POST", reqURL, c.face.key, []byte(payload))
 
@@ -179,7 +191,7 @@ func (c *Client) CreatePerson(personGroupID, name, userData string) (*Person, er
 
 // GetPerson calls the Project Oxford Face API to get a person within an existing personGroup with the given personID.
 func (c *Client) GetPerson(personGroupID, personID string) (*Person, error) {
-	reqURL := fmt.Sprintf("https://api.projectoxford.ai/face/v1.0/personGroups/%s/persons/%s", strings.ToLower(personGroupID), personID)
+	reqURL := fmt.Sprintf("%s/personGroups/%s/persons/%s", c.face.GetURL(), strings.ToLower(personGroupID), personID)
 	r, err := generateRequest("GET", reqURL, c.face.key)
 
 	if err != nil {
