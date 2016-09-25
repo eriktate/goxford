@@ -89,3 +89,11 @@ type PersonGroup struct {
 	Name          string `json:"name"`
 	UserData      string `json:"userData,omitempty"`
 }
+
+// Person represents a person within the Project Oxford Face API.
+type Person struct {
+	PersonID         string   `json:"personId"`
+	PersistedFaceIds []string `json:"persistedFaceIds,omitempty"`
+	Name             string   `json:"name,omitempty"`
+	UserData         string   `json:"userData,omitempty"`
+}
