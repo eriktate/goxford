@@ -154,6 +154,51 @@ func (c *Client) GetPersonGroup(personGroupID string) (*PersonGroup, error) {
 	return pgRes, nil
 }
 
+// CreatePerson calls the Project Oxford Face API to create a person within an existing personGroup.
+func (c *Client) CreatePerson(personGroupID, name, userData string) (*Person, error) {
+	reqURL := fmt.Sprintf("https://api.projectoxford.ai/face/v1.0/personGroups/%s/persons", strings.ToLower(personGroupID))
+	payload := fmt.Sprintf("{\"name\":\"%s\",\"userData\":\"%s\"}", name, userData)
+	r, err := generateRequestWithJSONPayload("POST", reqURL, c.face.key, []byte(payload))
+
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := http.DefaultClient.Do(r)
+
+	if err != nil {
+		return nil, err
+	}
+
+	decoder := json.NewDecoder(res.Body)
+	pRes := &Person{}
+	err = decoder.Decode(pRes)
+
+	return pRes, err
+}
+
+// GetPerson calls the Project Oxford Face API to get a person within an existing personGroup with the given personID.
+func (c *Client) GetPerson(personGroupID, personID string) (*Person, error) {
+	reqURL := fmt.Sprintf("https://api.projectoxford.ai/face/v1.0/personGroups/%s/persons/%s", strings.ToLower(personGroupID), personID)
+	r, err := generateRequest("GET", reqURL, c.face.key)
+
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := http.DefaultClient.Do(r)
+
+	if err != nil {
+		return nil, err
+	}
+
+	decoder := json.NewDecoder(res.Body)
+	pRes := &Person{}
+	err = decoder.Decode(pRes)
+
+	return pRes, err
+}
+
 func generateRequest(method, url, key string) (*http.Request, error) {
 	r, err := http.NewRequest(method, url, nil)
 

@@ -55,4 +55,27 @@ func main() {
 	data, _ = json.Marshal(pg)
 
 	log.Println(string(data))
+
+	// TESTING PERSONS
+	/*
+		log.Println("Testing CreatePerson...")
+		p, err := client.CreatePerson("testgroup", "Erik Tate", "")
+
+		if err != nil {
+			log.Println(err)
+		}
+
+		log.Printf("Created person with personID: %s", p.PersonID)
+	*/
+
+	log.Println("Testing GetPerson...")
+	p, err := client.GetPerson("testGroup", "f4e60dcf-c32f-4609-ad1c-ffa8ea92cbf7")
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	data, _ = json.Marshal(p)
+
+	log.Println(string(data))
 }
