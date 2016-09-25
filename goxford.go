@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 )
 
 //Client is a collection of API structs that can be used to communicate with different Project Oxford APIs.
@@ -100,6 +101,57 @@ func (c *Client) DetectBytes(image []byte, returnFaceAttributes string, returnFa
 	}
 
 	return detRes, nil
+}
+
+// CreatePersonGroup calls the Project Oxford Face API to create a new person group that persons can be added to.
+func (c *Client) CreatePersonGroup(personGroupID, displayName, userData string) (bool, error) {
+	reqURL := fmt.Sprintf("https://api.projectoxford.ai/face/v1.0/personGroups/%s", strings.ToLower(personGroupID))
+	payload := fmt.Sprintf("{\"name\":\"%s\",\"userData\":\"%s\"}", displayName, userData)
+
+	r, err := generateRequestWithJSONPayload("PUT", reqURL, c.face.key, []byte(payload))
+
+	if err != nil {
+		return false, err
+	}
+
+	resp, err := http.DefaultClient.Do(r)
+
+	if err != nil {
+		return false, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return false, fmt.Errorf("Failed to create PersonGroup. Status code: %d", resp.StatusCode)
+	}
+
+	return true, nil
+}
+
+// GetPersonGroup calls the Project Oxford Face API to get a person group with the given personGroupID.
+func (c *Client) GetPersonGroup(personGroupID string) (*PersonGroup, error) {
+	reqURL := fmt.Sprintf("https://api.projectoxford.ai/face/v1.0/personGroups/%s", strings.ToLower(personGroupID))
+
+	r, err := generateRequest("GET", reqURL, c.face.key)
+
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := http.DefaultClient.Do(r)
+
+	if err != nil {
+		return nil, err
+	}
+
+	decoder := json.NewDecoder(res.Body)
+	pgRes := &PersonGroup{}
+	err = decoder.Decode(pgRes)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return pgRes, nil
 }
 
 func generateRequest(method, url, key string) (*http.Request, error) {

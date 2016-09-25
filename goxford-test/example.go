@@ -34,4 +34,25 @@ func main() {
 	data, _ = json.Marshal(res)
 
 	fmt.Println(string(data))
+
+	// TESTING PERSON GROUPS
+	/*log.Println("Testing CreatePersonGroup...")
+	_, err = client.CreatePersonGroup("testGroup", "Group for testing", "")
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	log.Println("Done!")
+	*/
+	log.Println("Testing GetPersonGroup...")
+	pg, err := client.GetPersonGroup("testGroup")
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	data, _ = json.Marshal(pg)
+
+	log.Println(string(data))
 }
