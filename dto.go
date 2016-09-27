@@ -97,3 +97,9 @@ type Person struct {
 	Name             string   `json:"name,omitempty"`
 	UserData         string   `json:"userData,omitempty"`
 }
+
+// PersistedFaceResponse is a response for requests dealing with PersistedFaces.
+type PersistedFaceResponse struct {
+	PersistedFaceID string `json:"persistedFaceId"`
+	UserData        string `json:"userData,omitempty"`
+}

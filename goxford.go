@@ -211,6 +211,74 @@ func (c *Client) GetPerson(personGroupID, personID string) (*Person, error) {
 	return pRes, err
 }
 
+// AddFaceURLToPerson calls the Project Oxford Face API to add a face image URL to a person in a personGroup with the given personID.
+func (c *Client) AddFaceURLToPerson(personGroupID, personID, userData, targetFace, url string) (*PersistedFaceResponse, error) {
+	reqURL := fmt.Sprintf("%s/personGroups/%s/persons/%s/persistedFaces?userData=%s&targetFace=%s",
+		c.face.GetURL(),
+		strings.ToLower(personGroupID),
+		personID,
+		userData,
+		targetFace)
+
+	payload := fmt.Sprintf("{\"url\":\"%s\"}", url)
+	r, err := generateRequestWithJSONPayload("POST", reqURL, c.face.key, []byte(payload))
+
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := http.DefaultClient.Do(r)
+
+	if err != nil {
+		return nil, err
+	}
+
+	decoder := json.NewDecoder(res.Body)
+	pRes := &PersistedFaceResponse{}
+	err = decoder.Decode(pRes)
+
+	return pRes, err
+}
+
+// AddFacePathToPerson calls the Project Oxford Face API to add a local image to a person in a personGroup with the given personID.
+func (c *Client) AddFacePathToPerson(personGroupID, personID, userData, targetFace, path string) (*PersistedFaceResponse, error) {
+	data, err := ioutil.ReadFile(path)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return c.AddFaceBytesToPerson(personGroupID, personID, userData, targetFace, data)
+}
+
+// AddFaceBytesToPerson calls the Project Oxford Face API to add face image bytes to a person in a personGroup with the given personID.
+func (c *Client) AddFaceBytesToPerson(personGroupID, personID, userData, targetFace string, face []byte) (*PersistedFaceResponse, error) {
+	reqURL := fmt.Sprintf("%s/personGroups/%s/persons/%s/persistedFaces?userData=%s&targetFace=%s",
+		c.face.GetURL(),
+		strings.ToLower(personGroupID),
+		personID,
+		userData,
+		targetFace)
+
+	r, err := generateRequestWithOctetPayload("POST", reqURL, c.face.key, face)
+
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := http.DefaultClient.Do(r)
+
+	if err != nil {
+		return nil, err
+	}
+
+	decoder := json.NewDecoder(res.Body)
+	pRes := &PersistedFaceResponse{}
+	err = decoder.Decode(pRes)
+
+	return pRes, err
+}
+
 func generateRequest(method, url, key string) (*http.Request, error) {
 	r, err := http.NewRequest(method, url, nil)
 

@@ -78,4 +78,24 @@ func main() {
 	data, _ = json.Marshal(p)
 
 	log.Println(string(data))
+
+	/*
+		  log.Println("Testing AddFaceURLToPerson...")
+			pfRes, err := client.AddFaceURLToPerson("testgroup", "f4e60dcf-c32f-4609-ad1c-ffa8ea92cbf7", "", "", "http://images.amcnetworks.com/bbcamerica.com/wp-content/uploads/2015/01/tenthdoctor.jpg")
+
+			if err != nil {
+				log.Println(err)
+			}
+
+			log.Printf("Successfully added face url: %s", pfRes.PersistedFaceID)
+	*/
+
+	log.Println("Testing AddFacePathToPerson (and AddFaceBytesToPerson)...")
+	pfRes, err := client.AddFacePathToPerson("testgroup", "f4e60dcf-c32f-4609-ad1c-ffa8ea92cbf7", "", "", "./testImage.jpg")
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	log.Printf("Successfully added face path: %s", pfRes.PersistedFaceID)
 }
